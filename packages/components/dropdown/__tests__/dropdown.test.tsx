@@ -526,7 +526,7 @@ describe("Dropdown", () => {
         <DropdownTrigger>
           <Image
             alt="NextUI hero Image"
-            src="https://nextui-docs-v2.vercel.app/images/hero-card-complete.jpeg"
+            src="https://nextui.org/images/hero-card-complete.jpeg"
             width={300}
           />
         </DropdownTrigger>
@@ -794,5 +794,88 @@ describe("Keyboard interactions", () => {
     expect(logSpy).toHaveBeenCalledWith("SPACE");
 
     logSpy.mockRestore();
+  });
+
+  it("should respect closeOnSelect setting of DropdownItem (static)", async () => {
+    const onOpenChange = jest.fn();
+    const wrapper = render(
+      <Dropdown onOpenChange={onOpenChange}>
+        <DropdownTrigger>
+          <Button data-testid="trigger-test">Trigger</Button>
+        </DropdownTrigger>
+        <DropdownMenu aria-label="Actions">
+          <DropdownItem key="new" closeOnSelect={false}>
+            New file
+          </DropdownItem>
+          <DropdownItem key="copy">Copy link</DropdownItem>
+        </DropdownMenu>
+      </Dropdown>,
+    );
+
+    let triggerButton = wrapper.getByTestId("trigger-test");
+
+    act(() => {
+      triggerButton.click();
+    });
+    expect(onOpenChange).toBeCalledTimes(1);
+
+    let menuItems = wrapper.getAllByRole("menuitem");
+
+    await act(async () => {
+      await userEvent.click(menuItems[0]);
+      expect(onOpenChange).toBeCalledTimes(1);
+    });
+
+    await act(async () => {
+      await userEvent.click(menuItems[1]);
+      expect(onOpenChange).toBeCalledTimes(2);
+    });
+  });
+
+  it("should respect closeOnSelect setting of DropdownItem (dynamic)", async () => {
+    const onOpenChange = jest.fn();
+    const items = [
+      {
+        key: "new",
+        label: "New file",
+      },
+      {
+        key: "copy",
+        label: "Copy link",
+      },
+    ];
+    const wrapper = render(
+      <Dropdown onOpenChange={onOpenChange}>
+        <DropdownTrigger>
+          <Button data-testid="trigger-test">Trigger</Button>
+        </DropdownTrigger>
+        <DropdownMenu aria-label="Actions" items={items}>
+          {(item) => (
+            <DropdownItem key={item.key} closeOnSelect={item.key !== "new"}>
+              {item.label}
+            </DropdownItem>
+          )}
+        </DropdownMenu>
+      </Dropdown>,
+    );
+
+    let triggerButton = wrapper.getByTestId("trigger-test");
+
+    act(() => {
+      triggerButton.click();
+    });
+    expect(onOpenChange).toBeCalledTimes(1);
+
+    let menuItems = wrapper.getAllByRole("menuitem");
+
+    await act(async () => {
+      await userEvent.click(menuItems[0]);
+      expect(onOpenChange).toBeCalledTimes(1);
+    });
+
+    await act(async () => {
+      await userEvent.click(menuItems[1]);
+      expect(onOpenChange).toBeCalledTimes(2);
+    });
   });
 });
